@@ -85,9 +85,6 @@ if st.checkbox("Check File Status"):
     if uploaded_file:
         st.write(f"**Uploaded file:** {uploaded_file.name} ({uploaded_file.size} bytes)")
 
-# Fallback: Show email buttons only for resume-related input
-show_email_buttons = False
-
 # Chat input
 user_input = st.chat_input("Say something...")
 if user_input:
@@ -102,6 +99,11 @@ if user_input:
         st.session_state.messages.append({"role": "user", "content": user_input})
         st.chat_message("user").markdown(user_input)
 
+        # Initialize bot reply for debugging
+        bot_reply = "No response from API"
+        api_error = None
+
+        # Try Poe API
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {POE_API_KEY}"
@@ -117,48 +119,41 @@ if user_input:
                 bot_reply = response.json()["choices"][0]["message"]["content"]
                 st.session_state.messages.append({"role": "assistant", "content": bot_reply})
                 st.chat_message("assistant").markdown(bot_reply)
-                st.write(f"**Debug: Bot Reply**: {bot_reply}")  # Log full reply
-
-                # Trigger on "resume" in user input or bot reply
-                if "resume" in user_input.lower() or "resume" in bot_reply.lower():
-                    st.success("Detected resume-related request!")
-                    show_email_buttons = True
-                else:
-                    st.warning("No resume request detected. Try saying 'send resume' or 'email resume'.")
             else:
-                st.error(f"Poe API error: {response.status_code} - {response.text}")
-                st.write(f"**Debug: API Response**: {response.text}")
-                # Fallback: Show buttons if user input mentions "resume"
-                if "resume" in user_input.lower():
-                    st.success("Detected 'resume' in input despite API error!")
-                    show_email_buttons = True
+                api_error = f"Poe API error: {response.status_code} - {response.text}"
+                st.error(api_error)
         except Exception as e:
-            st.error(f"Failed to connect to Poe API: {str(e)}")
-            st.write(f"**Debug: API Exception**: {str(e)}")
-            # Fallback: Show buttons if user input mentions "resume"
-            if "resume" in user_input.lower():
-                st.success("Detected 'resume' in input despite API failure!")
-                show_email_buttons = True
+            api_error = f"Failed to connect to Poe API: {str(e)}"
+            st.error(api_error)
 
-# Show email buttons for resume requests
-if show_email_buttons:
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("📧 Send Email (No Attachment)", key="chat_no_attach"):
-            st.write("Confirm email button clicked (no attachment)!")
-            receiver_email = "wai.tse.hk@outlook.com"
-            subject = "Test Email from Wai Tse ChatBot"
-            body = "This is a test email triggered by the chatbot."
-            send_email(receiver_email, subject, body)
-            st.rerun()
-    with col2:
-        if st.button("📎 Send Email (With Resume Attachment)", key="chat_with_attach"):
-            st.write("Confirm email button clicked (with attachment)!")
-            receiver_email = "wai.tse.hk@outlook.com"
-            subject = "Test Email from Wai Tse ChatBot - Resume Attached"
-            body = "This is a test email with resume attachment triggered by the chatbot."
-            send_email(receiver_email, subject, body, "Wai_Tse_Resume.pdf")
-            st.rerun()
+        # Debug logging
+        st.write(f"**Debug: User Input**: {user_input}")
+        st.write(f"**Debug: Bot Reply**: {bot_reply}")
+        if api_error:
+            st.write(f"**Debug: API Error**: {api_error}")
+
+        # Show email buttons if "resume" is in user input
+        if "resume" in user_input.lower():
+            st.success("Detected 'resume' in your input!")
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("📧 Send Email (No Attachment)", key="chat_no_attach"):
+                    st.write("Confirm email button clicked (no attachment)!")
+                    receiver_email = "wai.tse.hk@outlook.com"
+                    subject = "Test Email from Wai Tse ChatBot"
+                    body = "This is a test email triggered by the chatbot."
+                    send_email(receiver_email, subject, body)
+                    st.rerun()
+            with col2:
+                if st.button("📎 Send Email (With Resume Attachment)", key="chat_with_attach"):
+                    st.write("Confirm email button clicked (with attachment)!")
+                    receiver_email = "wai.tse.hk@outlook.com"
+                    subject = "Test Email from Wai Tse ChatBot - Resume Attached"
+                    body = "This is a test email with resume attachment triggered by the chatbot."
+                    send_email(receiver_email, subject, body, "Wai_Tse_Resume.pdf")
+                    st.rerun()
+        else:
+            st.warning("No 'resume' detected in input. Try saying 'send resume' or 'email resume'.")
 
 # Debug section
 if st.checkbox("Show Debug Info"):
