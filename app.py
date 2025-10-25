@@ -99,9 +99,9 @@ if user_input:
                 st.write(f"**Debug: Bot Reply**: {bot_reply}")  # Log for debugging
 
                 # Check if LLM reply contains "Are you confirmed to send an email"
-                if "The resume has just sent out." in bot_reply:
-                    st.success("Detected 'The resume has just sent out.' in LLM response! Sending email with attachment...")
-                    receiver_email = "wai.tse.hk@outlook.com"
+                if "The resume has just sent out" in bot_reply:
+                    st.success("Detected 'The resume has just sent out' in LLM response! Sending email with attachment...")
+                    receiver_email = bot_reply.replace('The resume has just sent out to ', '')[:-1]
                     subject = "Test Email from Wai Tse ChatBot - Resume Attached"
                     body = "This is a test email with resume attachment triggered by the chatbot."
                     file_path = "Wai_Tse_Resume.pdf"  # File in same directory
