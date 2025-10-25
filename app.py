@@ -20,14 +20,14 @@ for msg in st.session_state.messages:
 user_input = st.chat_input("Say something...")
 if user_input:
     # Check for "Hello" first (case-insensitive)
-    if "are you confirmed to send an email" in user_input.lower():
+    if "hello" in user_input.lower():
         # Custom action for "Hello"
-        custom_response = "Noted, I am going to email you the resume rigth away 😊"
+        custom_response = "Hi there! You said 'Hello', so I'm giving you a special greeting! 😊"
         st.session_state.messages.append({"role": "user", "content": user_input})
         st.chat_message("user").markdown(user_input)
         st.session_state.messages.append({"role": "assistant", "content": custom_response})
         st.chat_message("assistant").markdown(custom_response)
-        st.success("Detected 'Are you confirmed to send an email' and triggered custom action!")
+        st.success("Detected 'Hello' and triggered custom action!")
     else:
         # Proceed with normal flow: append user message and call Poe API
         st.session_state.messages.append({"role": "user", "content": user_input})
