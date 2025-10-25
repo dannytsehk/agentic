@@ -32,8 +32,8 @@ if "messages" not in st.session_state:
 for msg in st.session_state.messages:
     st.chat_message(msg["role"]).markdown(msg["content"])
 
-# Function to send email (no attachment)
-def send_email(receiver_email, subject, body):
+# Function to send email (with attachment)
+def send_email(receiver_email, subject, body, file_path):
     try:
         msg = EmailMessage()
         msg["From"] = SENDER_EMAIL
@@ -41,10 +41,21 @@ def send_email(receiver_email, subject, body):
         msg["Subject"] = subject
         msg.set_content(body)
 
+        # Check and attach file
+        if os.path.exists(file_path):
+            st.info(f"Attaching file: {os.path.basename(file_path)}")
+            with open(file_path, "rb") as f:
+                file_data = f.read()
+                file_name = os.path.basename(f.name)
+                msg.add_attachment(file_data, maintype="application", subtype="octet-stream", filename=file_name)
+        else:
+            st.warning(f"File not found: {file_path}")
+            return False
+
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
             smtp.login(SENDER_EMAIL, EMAIL_PASSWORD)
             smtp.send_message(msg)
-        st.success("Email sent successfully!")
+        st.success("Email sent successfully with attachment!")
         return True
     except smtplib.SMTPAuthenticationError as e:
         st.error(f"Authentication error: {e}. Check App Password and 2FA.")
@@ -88,12 +99,13 @@ if user_input:
                 st.write(f"**Debug: Bot Reply**: {bot_reply}")  # Log for debugging
 
                 # Check if LLM reply contains "Are you confirmed to send an email"
-                if "The resume has just sent out." in bot_reply:
-                    st.success("Detected 'Are you confirmed to send an email' in LLM response! Sending email...")
+                if "Are you confirmed to send an email" in bot_reply:
+                    st.success("Detected 'Are you confirmed to send an email' in LLM response! Sending email with attachment...")
                     receiver_email = "wai.tse.hk@outlook.com"
-                    subject = "Test Email from Wai Tse ChatBot"
-                    body = "This is a test email triggered by the chatbot."
-                    send_email(receiver_email, subject, body)
+                    subject = "Test Email from Wai Tse ChatBot - Resume Attached"
+                    body = "This is a test email with resume attachment triggered by the chatbot."
+                    file_path = "Wai_Tse_Resume.pdf"  # File in same directory
+                    send_email(receiver_email, subject, body, file_path)
                     st.rerun()  # Refresh UI to show success/error
             else:
                 st.error(f"Poe API error: {response.status_code} - {response.text}")
@@ -108,3 +120,4 @@ if st.checkbox("Show Debug Info"):
     st.write(f"POE_API_KEY: {'Set' if POE_API_KEY else 'Not set'}")
     st.write(f"EMAIL_ADDRESS: {SENDER_EMAIL if SENDER_EMAIL else 'Not set'}")
     st.write(f"EMAIL_PASSWORD: {'Set' if EMAIL_PASSWORD else 'Not set'}")
+    st.write(f"**Wai_Tse_Resume.pdf exists**: {'✅ Yes' if os.path.exists('Wai_Tse_Resume.pdf') else '❌ No'}")
