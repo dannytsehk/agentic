@@ -41,7 +41,6 @@ def send_email(receiver_email, subject, body, file_path=None):
         msg["Subject"] = subject
         msg.set_content(body)
 
-        # Add attachment if file_path provided
         if file_path and os.path.exists(file_path):
             st.info(f"Attaching file: {os.path.basename(file_path)}")
             with open(file_path, "rb") as f:
@@ -83,14 +82,10 @@ with col2:
         receiver_email = "wai.tse.hk@outlook.com"
         subject = "Test Email WITH Attachment"
         body = "This is a test email with an attachment from the Streamlit app."
-        
-        # Use uploaded file or default resume file
         test_file_path = uploaded_file.name if uploaded_file else "Wai_Tse_Resume.pdf"
         if uploaded_file:
-            # Save uploaded file temporarily
             with open(test_file_path, "wb") as f:
                 f.write(uploaded_file.getbuffer())
-        
         send_email(receiver_email, subject, body, test_file_path)
 
 # Show file status
@@ -129,30 +124,36 @@ if user_input:
                 bot_reply = response.json()["choices"][0]["message"]["content"]
                 st.session_state.messages.append({"role": "assistant", "content": bot_reply})
                 st.chat_message("assistant").markdown(bot_reply)
+                st.write(f"**Debug: Bot Reply**: {bot_reply}")  # Log full reply for debugging
 
-                if "Are you confirmed to send an email" in bot_reply:
+                # Broaden trigger to catch variations (case-insensitive)
+                if "confirm" in bot_reply.lower() and "email" in bot_reply.lower():
                     st.success("Detected email confirmation request from LLM!")
                     col1, col2 = st.columns(2)
                     with col1:
-                        if st.button("📧 Send Email (No Attachment)"):
-                            st.write("Confirm email button clicked!")
+                        if st.button("📧 Send Email (No Attachment)", key="chat_no_attach"):
+                            st.write("Confirm email button clicked (no attachment)!")
                             receiver_email = "wai.tse.hk@outlook.com"
                             subject = "Test Email from Wai Tse ChatBot"
                             body = "This is a test email triggered by the chatbot."
                             send_email(receiver_email, subject, body)
                             st.rerun()
                     with col2:
-                        if st.button("📎 Send Email (With Resume Attachment)"):
-                            st.write("Confirm email with attachment button clicked!")
+                        if st.button("📎 Send Email (With Resume Attachment)", key="chat_with_attach"):
+                            st.write("Confirm email button clicked (with attachment)!")
                             receiver_email = "wai.tse.hk@outlook.com"
                             subject = "Test Email from Wai Tse ChatBot - Resume Attached"
                             body = "This is a test email with resume attachment triggered by the chatbot."
                             send_email(receiver_email, subject, body, "Wai_Tse_Resume.pdf")
                             st.rerun()
+                else:
+                    st.warning("Bot reply did not trigger email confirmation. Try saying 'send email' or 'confirm email'.")
             else:
                 st.error(f"Poe API error: {response.status_code} - {response.text}")
+                st.write(f"**Debug: API Response**: {response.text}")
         except Exception as e:
             st.error(f"Failed to connect to Poe API: {str(e)}")
+            st.write(f"**Debug: API Exception**: {str(e)}")
 
 # Debug section
 if st.checkbox("Show Debug Info"):
