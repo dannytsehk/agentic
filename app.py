@@ -95,6 +95,9 @@ if st.checkbox("Check File Status"):
     if uploaded_file:
         st.write(f"**Uploaded file:** {uploaded_file.name} ({uploaded_file.size} bytes)")
 
+# Fallback: Always show email buttons after chat input
+show_email_buttons = False
+
 # Chat input
 user_input = st.chat_input("Say something...")
 if user_input:
@@ -124,36 +127,43 @@ if user_input:
                 bot_reply = response.json()["choices"][0]["message"]["content"]
                 st.session_state.messages.append({"role": "assistant", "content": bot_reply})
                 st.chat_message("assistant").markdown(bot_reply)
-                st.write(f"**Debug: Bot Reply**: {bot_reply}")  # Log full reply for debugging
+                st.write(f"**Debug: Bot Reply**: {bot_reply}")  # Log full reply
 
-                # Broaden trigger to catch variations (case-insensitive)
-                if "confirm" in bot_reply.lower() and "email" in bot_reply.lower():
-                    st.success("Detected email confirmation request from LLM!")
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        if st.button("📧 Send Email (No Attachment)", key="chat_no_attach"):
-                            st.write("Confirm email button clicked (no attachment)!")
-                            receiver_email = "wai.tse.hk@outlook.com"
-                            subject = "Test Email from Wai Tse ChatBot"
-                            body = "This is a test email triggered by the chatbot."
-                            send_email(receiver_email, subject, body)
-                            st.rerun()
-                    with col2:
-                        if st.button("📎 Send Email (With Resume Attachment)", key="chat_with_attach"):
-                            st.write("Confirm email button clicked (with attachment)!")
-                            receiver_email = "wai.tse.hk@outlook.com"
-                            subject = "Test Email from Wai Tse ChatBot - Resume Attached"
-                            body = "This is a test email with resume attachment triggered by the chatbot."
-                            send_email(receiver_email, subject, body, "Wai_Tse_Resume.pdf")
-                            st.rerun()
+                # Broader trigger
+                if any(keyword in bot_reply.lower() for keyword in ["confirm", "send", "email"]):
+                    st.success("Detected email-related request from LLM!")
+                    show_email_buttons = True
                 else:
-                    st.warning("Bot reply did not trigger email confirmation. Try saying 'send email' or 'confirm email'.")
+                    st.warning("Bot reply did not trigger email confirmation. Try saying 'send email', 'confirm email', or 'email resume'.")
+                    show_email_buttons = True  # Fallback: Show buttons anyway
             else:
                 st.error(f"Poe API error: {response.status_code} - {response.text}")
                 st.write(f"**Debug: API Response**: {response.text}")
+                show_email_buttons = True  # Fallback on API error
         except Exception as e:
             st.error(f"Failed to connect to Poe API: {str(e)}")
             st.write(f"**Debug: API Exception**: {str(e)}")
+            show_email_buttons = True  # Fallback on exception
+
+# Show email buttons (triggered or fallback)
+if show_email_buttons:
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("📧 Send Email (No Attachment)", key="chat_no_attach"):
+            st.write("Confirm email button clicked (no attachment)!")
+            receiver_email = "wai.tse.hk@outlook.com"
+            subject = "Test Email from Wai Tse ChatBot"
+            body = "This is a test email triggered by the chatbot."
+            send_email(receiver_email, subject, body)
+            st.rerun()
+    with col2:
+        if st.button("📎 Send Email (With Resume Attachment)", key="chat_with_attach"):
+            st.write("Confirm email button clicked (with attachment)!")
+            receiver_email = "wai.tse.hk@outlook.com"
+            subject = "Test Email from Wai Tse ChatBot - Resume Attached"
+            body = "This is a test email with resume attachment triggered by the chatbot."
+            send_email(receiver_email, subject, body, "Wai_Tse_Resume.pdf")
+            st.rerun()
 
 # Debug section
 if st.checkbox("Show Debug Info"):
