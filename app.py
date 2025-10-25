@@ -49,10 +49,10 @@ if user_input:
             st.session_state.messages.append({"role": "assistant", "content": bot_reply})
             st.chat_message("assistant").markdown(bot_reply)
 
-            # Check if LLM reply contains "Are you confirmed to send an email"
-            if "Are you confirmed to send an email" in bot_reply:
+            # Check if LLM reply contains "The resume has just sent out to"
+            if "The resume has just sent out to" in bot_reply:
                 # Define the action to take
-                st.success("Detected 'Are you confirmed to send an email' in LLM response! Triggering custom action.")
+                st.success("Detected 'The resume has just sent out to' in LLM response! Triggering custom action.")
                 # Example action: Display a confirmation button
                 if st.button("Confirm Email Sending"):
                     st.write("Email sending confirmed!")
