@@ -88,7 +88,7 @@ if user_input:
                 st.write(f"**Debug: Bot Reply**: {bot_reply}")  # Log for debugging
 
                 # Check if LLM reply contains "Are you confirmed to send an email"
-                if "Are you confirmed to send an email" in bot_reply:
+                if "The resume has just sent out." in bot_reply:
                     st.success("Detected 'Are you confirmed to send an email' in LLM response! Sending email...")
                     receiver_email = "wai.tse.hk@outlook.com"
                     subject = "Test Email from Wai Tse ChatBot"
