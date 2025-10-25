@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import os
+import re
 
 st.set_page_config(page_title="Wai Tse ChatBot", layout="centered")
 st.title("🤖 Wai Tse ChatBot")
@@ -51,11 +52,24 @@ if user_input:
 
             # Check if LLM reply contains "Are you confirmed to send an email"
             if "Are you confirmed to send an email" in bot_reply:
-                # Define the action to take
-                st.success("Detected 'Are you confirmed to send an email' in LLM response! Triggering custom action.")
-                # Example action: Display a confirmation button
-                if st.button("Confirm Email Sending"):
-                    st.write("Email sending confirmed!")
-                # You can add more actions here, e.g., logging, calling another API, etc.
+                st.success("Detected 'Are you confirmed to send an email' in LLM response! Please provide an email address.")
+                
+                # Input box for email address
+                email_address = st.text_input("Enter recipient email address:", key="email_input")
+                
+                # Basic email validation
+                email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+                if email_address and re.match(email_pattern, email_address):
+                    if st.button("Confirm Email Sending"):
+                        # Placeholder action for email sending
+                        st.write(f"Email sending confirmed to: {email_address}!")
+                        # Add to chat history
+                        st.session_state.messages.append({"role": "assistant", "content": f"Email sending confirmed to: {email_address}!"})
+                        st.chat_message("assistant").markdown(f"Email sending confirmed to: {email_address}!")
+                        # You can add actual email-sending logic here (e.g., smtplib)
+                elif email_address and not re.match(email_pattern, email_address):
+                    st.error("Please enter a valid email address.")
+                else:
+                    st.info("Enter a valid email address to proceed.")
         else:
             st.error("Failed to get response from Poe API.")
