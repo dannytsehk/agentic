@@ -66,27 +66,17 @@ def send_email(receiver_email, subject, body, file_path=None):
 # File upload for testing
 uploaded_file = st.file_uploader("Upload file for testing (optional)", type=['pdf', 'docx', 'txt'])
 
-# Test email buttons (for debugging)
-col1, col2 = st.columns(2)
-with col1:
-    if st.button("🧪 Test Email (No Attachment)"):
-        st.write("Test email button clicked!")
-        receiver_email = "wai.tse.hk@outlook.com"
-        subject = "Test Email from Wai Tse ChatBot"
-        body = "This is a direct test email from the Streamlit app."
-        send_email(receiver_email, subject, body)
-
-with col2:
-    if st.button("📎 Test Email (With Attachment)"):
-        st.write("Test email with attachment button clicked!")
-        receiver_email = "wai.tse.hk@outlook.com"
-        subject = "Test Email WITH Attachment"
-        body = "This is a test email with an attachment from the Streamlit app."
-        test_file_path = uploaded_file.name if uploaded_file else "Wai_Tse_Resume.pdf"
-        if uploaded_file:
-            with open(test_file_path, "wb") as f:
-                f.write(uploaded_file.getbuffer())
-        send_email(receiver_email, subject, body, test_file_path)
+# Test email button (only for attachment)
+if st.button("📎 Test Email (With Attachment)"):
+    st.write("Test email with attachment button clicked!")
+    receiver_email = "wai.tse.hk@outlook.com"
+    subject = "Test Email WITH Attachment"
+    body = "This is a test email with an attachment from the Streamlit app."
+    test_file_path = uploaded_file.name if uploaded_file else "Wai_Tse_Resume.pdf"
+    if uploaded_file:
+        with open(test_file_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
+    send_email(receiver_email, subject, body, test_file_path)
 
 # Show file status
 if st.checkbox("Check File Status"):
@@ -95,7 +85,7 @@ if st.checkbox("Check File Status"):
     if uploaded_file:
         st.write(f"**Uploaded file:** {uploaded_file.name} ({uploaded_file.size} bytes)")
 
-# Fallback: Always show email buttons after chat input
+# Fallback: Show email buttons only for resume-related input
 show_email_buttons = False
 
 # Chat input
@@ -129,23 +119,28 @@ if user_input:
                 st.chat_message("assistant").markdown(bot_reply)
                 st.write(f"**Debug: Bot Reply**: {bot_reply}")  # Log full reply
 
-                # Broader trigger
-                if any(keyword in bot_reply.lower() for keyword in ["confirm", "send", "email"]):
-                    st.success("Detected email-related request from LLM!")
+                # Trigger on "resume" in user input or bot reply
+                if "resume" in user_input.lower() or "resume" in bot_reply.lower():
+                    st.success("Detected resume-related request!")
                     show_email_buttons = True
                 else:
-                    st.warning("Bot reply did not trigger email confirmation. Try saying 'send email', 'confirm email', or 'email resume'.")
-                    show_email_buttons = True  # Fallback: Show buttons anyway
+                    st.warning("No resume request detected. Try saying 'send resume' or 'email resume'.")
             else:
                 st.error(f"Poe API error: {response.status_code} - {response.text}")
                 st.write(f"**Debug: API Response**: {response.text}")
-                show_email_buttons = True  # Fallback on API error
+                # Fallback: Show buttons if user input mentions "resume"
+                if "resume" in user_input.lower():
+                    st.success("Detected 'resume' in input despite API error!")
+                    show_email_buttons = True
         except Exception as e:
             st.error(f"Failed to connect to Poe API: {str(e)}")
             st.write(f"**Debug: API Exception**: {str(e)}")
-            show_email_buttons = True  # Fallback on exception
+            # Fallback: Show buttons if user input mentions "resume"
+            if "resume" in user_input.lower():
+                st.success("Detected 'resume' in input despite API failure!")
+                show_email_buttons = True
 
-# Show email buttons (triggered or fallback)
+# Show email buttons for resume requests
 if show_email_buttons:
     col1, col2 = st.columns(2)
     with col1:
